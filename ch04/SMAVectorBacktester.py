@@ -33,7 +33,7 @@ class SMAVectorBacktester(object):
     get_data:
         retrieves and prepares the base data set
     set_parameters:
-        sets one or two new SMA parameters
+        設定一個或兩個ＳＭＡ參數
     run_strategy:
         runs the backtest for the SMA-based strategy
     plot_results:
@@ -54,7 +54,7 @@ class SMAVectorBacktester(object):
         self.get_data()
 
     def get_data(self):
-        ''' Retrieves and prepares the data.
+        ''' 抓取現有Data
         '''
         raw = pd.read_csv('http://hilpisch.com/pyalgo_eikon_eod_data.csv',
                           index_col=0, parse_dates=True).dropna()
@@ -69,6 +69,7 @@ class SMAVectorBacktester(object):
     def set_parameters(self, SMA1=None, SMA2=None):
         ''' Updates SMA parameters and resp. time series.
         '''
+
         if SMA1 is not None:
             self.SMA1 = SMA1
             self.data['SMA1'] = self.data['price'].rolling(
@@ -76,10 +77,12 @@ class SMAVectorBacktester(object):
         if SMA2 is not None:
             self.SMA2 = SMA2
             self.data['SMA2'] = self.data['price'].rolling(self.SMA2).mean()
+        # print('running setting',SMA1,SMA2)
 
     def run_strategy(self):
         ''' Backtests the trading strategy.
         '''
+        
         data = self.data.copy().dropna()
         data['position'] = np.where(data['SMA1'] > data['SMA2'], 1, -1)
         data['strategy'] = data['position'].shift(1) * data['return']
@@ -91,12 +94,14 @@ class SMAVectorBacktester(object):
         aperf = data['cstrategy'].iloc[-1]
         # out-/underperformance of strategy
         operf = aperf - data['creturns'].iloc[-1]
+        # print('running strategy',round(aperf, 2), round(operf, 2),round(aperf, 2)- round(operf, 2))
         return round(aperf, 2), round(operf, 2)
 
     def plot_results(self):
         ''' Plots the cumulative performance of the trading strategy
         compared to the symbol.
         '''
+        print('running plot')
         if self.results is None:
             print('No results to plot yet. Run a strategy.')
         title = '%s | SMA1=%d, SMA2=%d' % (self.symbol,
@@ -113,17 +118,20 @@ class SMAVectorBacktester(object):
         SMA: tuple
             SMA parameter tuple
         '''
+
         self.set_parameters(int(SMA[0]), int(SMA[1]))
+        # print('running update',-self.run_strategy()[0])
         return -self.run_strategy()[0]
 
     def optimize_parameters(self, SMA1_range, SMA2_range):
         ''' Finds global maximum given the SMA parameter ranges.
-
+—
         Parameters
         ==========
         SMA1_range, SMA2_range: tuple
             tuples of the form (start, end, step size)
         '''
+        # print('running optimize')
         opt = brute(self.update_and_run, (SMA1_range, SMA2_range), finish=None)
         return opt, -self.update_and_run(opt)
 
@@ -132,6 +140,6 @@ if __name__ == '__main__':
     smabt = SMAVectorBacktester('EUR=', 42, 252,
                                 '2010-1-1', '2020-12-31')
     print(smabt.run_strategy())
+    # print('cut1')
     smabt.set_parameters(SMA1=20, SMA2=100)
-    print(smabt.run_strategy())
-    print(smabt.optimize_parameters((30, 56, 4), (200, 300, 4)))
+    # 
